@@ -30,7 +30,7 @@ License: GPL2
 class NewsFeed {
 	const
 		FEEDS = array( 'rambler', 'yandex', 'google' ),
-		POST_PER_RSS = 5,
+		POST_PER_RSS = 9999,
 		DEST_PATH = '/feeds/';
 
 	public function __construct() {
