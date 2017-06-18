@@ -28,23 +28,27 @@ License: GPL2
 
 
 class NewsFeed {
-	private $rambler_feed_name = 'rambler';
-	private $folder = '/feeds/';
+	const
+		FEEDS = array( 'rambler', 'yandex', 'google' ),
+		POST_PER_RSS = 5,
+		DEST_PATH = '/feeds/';
 
 	public function __construct() {
-		add_action('admin_menu', array($this, 'add_setting_page'));
-		add_action('pre_get_posts', array($this, 'before_query'));
-		add_action('init', array($this, 'init'));
+		add_action( 'admin_menu', array( $this, 'add_setting_page' ) );
+		add_action( 'pre_get_posts', array( $this, 'before_query' ) );
+		add_action( 'init', array( $this, 'init' ) );
 	}
 
 	function add_setting_page() {
-		add_submenu_page('tools.php', 'Генератор фидов новостных сервисов', 'News feeds', 'manage_options', 'news-feeds', array(&$this,'admin_plugin_info'));
+		add_submenu_page( 'tools.php', 'Генератор фидов новостных сервисов', 'News feeds', 'manage_options', 'news-feeds', array( &$this,'admin_plugin_info' ) );
 	}
 
-	public function before_query($query) {
-		if ($query->is_main_query() && $query->is_feed && $query->is_feed($this->rambler_feed_name)) {
-			$query->set('posts_per_rss', 9999);
-		}
+	public function before_query( $query ) {
+		foreach (self::FEEDS as $value) :
+			if ( $query->is_main_query() && $query->is_feed && $query->is_feed( $value ) ) {
+				$query->set( 'posts_per_rss', self::POST_PER_RSS );
+			}
+		endforeach;
 	}
 
 	public function admin_plugin_info()	{
@@ -52,31 +56,37 @@ class NewsFeed {
 			<div class="wrap">
 				<h2>News feeds</h2><br>
 
-				Rambler feed url: <a target="_blank" href="<?php echo get_feed_link($this->rambler_feed_name); ?>" title="Ссылка на фид"><?php echo get_feed_link($this->rambler_feed_name); ?></a><br>
-				Rambler static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . $this->folder . $this->rambler_feed_name . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . $this->folder . $this->rambler_feed_name . '.xml'; ?></a>
+				<?php foreach (self::FEEDS as $value) : ?>
+					<?php echo ucfirst($value) ?> feed url: <a target="_blank" href="<?php echo get_feed_link($value); ?>" title="Ссылка на фид"><?php echo get_feed_link($value); ?></a><br>
+					<?php echo ucfirst($value) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
+				<?php endforeach; ?>
 			</div>
 		<?php
 	}
 
 	public function init() {
-		add_feed($this->rambler_feed_name, array($this, 'do_feed'));
+		foreach ( self::FEEDS as $value ) :
+			add_feed( $value, function() use ( $value ) {
+				add_filter( 'pre_option_rss_use_excerpt', '__return_zero' );
+
+				ob_start();
+					load_template( plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php' );
+				$output = ob_get_clean();
+
+				$this->save_feed($output, $value); // Сохраняем фид в папку
+
+				echo $output;
+			} );
+		endforeach;
 	}
 
-	public function do_feed() {
-		add_filter('pre_option_rss_use_excerpt', '__return_zero');
+	/**
+	 * Сохраняем фид в папку
+	 */
+	public function save_feed($output, $name) {
+		$file = $_SERVER["DOCUMENT_ROOT"] . self::DEST_PATH . $name . '.xml';
 
-		ob_start();
-		load_template(plugin_dir_path( __FILE__ ) . 'rambler.php');
-		$output = ob_get_clean();
-
-		$this->save_feed($output);
-		echo $output;
-	}
-
-	public function save_feed($output) {
-		$file = $_SERVER["DOCUMENT_ROOT"] . $this->folder . $this->rambler_feed_name . '.xml';
-
-		file_put_contents($file, $output);
+		file_put_contents( $file, $output );
 	}
 }
 
