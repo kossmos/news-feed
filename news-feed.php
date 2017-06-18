@@ -29,7 +29,7 @@ License: GPL2
 
 class NewsFeed {
 	const
-		FEEDS = array( 'rambler', 'yandex', 'google' ),
+		FEEDS = array( 'rambler', 'yandex', 'goog' ),
 		POST_PER_RSS = 9999,
 		DEST_PATH = '/feeds/';
 
@@ -56,7 +56,23 @@ class NewsFeed {
 			<div class="wrap">
 				<h2>News feeds</h2><br>
 
+				<?php
+					global $wp_rewrite;
+
+					echo "<pre>";
+					var_dump(ot_get_option('logo'));
+					// var_dump(plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php');
+					// var_dump($wp_rewrite->feeds);
+					echo "</pre>";
+				?>
+
 				<?php foreach (self::FEEDS as $value) : ?>
+					<?php
+					echo "<pre>";
+						var_dump(  );
+					echo "</pre>";
+
+					?>
 					<?php echo ucfirst($value) ?> feed url: <a target="_blank" href="<?php echo get_feed_link($value); ?>" title="Ссылка на фид"><?php echo get_feed_link($value); ?></a><br>
 					<?php echo ucfirst($value) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
 				<?php endforeach; ?>
@@ -66,8 +82,10 @@ class NewsFeed {
 
 	public function init() {
 		foreach ( self::FEEDS as $value ) :
+			// file_put_contents( $_SERVER["DOCUMENT_ROOT"] . self::DEST_PATH . $name . '.log', var_export( file_exists( plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php' ) ) );
+
 			add_feed( $value, function() use ( $value ) {
-				add_filter( 'pre_option_rss_use_excerpt', '__return_zero' );
+				// add_filter( 'pre_option_rss_use_excerpt', '__return_zero' );
 
 				ob_start();
 					load_template( plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php' );
