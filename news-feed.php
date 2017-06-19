@@ -29,18 +29,27 @@ License: GPL2
 
 class NewsFeed {
 	const
-		FEEDS = array( 'rambler', 'yandex', 'goog' ),
+		FEEDS = array( 'rambler', 'yandex', 'google' ),
 		POST_PER_RSS = 9999,
 		DEST_PATH = '/feeds/';
 
 	public function __construct() {
+        $this->options = get_option( 'news_feeds' );
+
 		add_action( 'admin_menu', array( $this, 'add_setting_page' ) );
+		add_action( 'admin_init', array( $this, 'page_init' ) );
 		add_action( 'pre_get_posts', array( $this, 'before_query' ) );
 		add_action( 'init', array( $this, 'init' ) );
 	}
 
-	function add_setting_page() {
-		add_submenu_page( 'tools.php', 'Генератор фидов новостных сервисов', 'News feeds', 'manage_options', 'news-feeds', array( &$this,'admin_plugin_info' ) );
+	public function add_setting_page() {
+		add_options_page(
+			'Генератор фидов новостных сервисов',
+			'News feeds',
+			'manage_options',
+			'news-feeds',
+			array( &$this,'admin_plugin_info' )
+		);
 	}
 
 	public function before_query( $query ) {
@@ -54,36 +63,27 @@ class NewsFeed {
 	public function admin_plugin_info()	{
 		?>
 			<div class="wrap">
-				<h2>News feeds</h2><br>
-
-				<?php
-					global $wp_rewrite;
-
-					echo "<pre>";
-					var_dump(ot_get_option('logo'));
-					// var_dump(plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php');
-					// var_dump($wp_rewrite->feeds);
-					echo "</pre>";
-				?>
+				<h2>News feeds</h2>
+				<h3><?php echo get_admin_page_title(); ?></h3>
 
 				<?php foreach (self::FEEDS as $value) : ?>
-					<?php
-					echo "<pre>";
-						var_dump(  );
-					echo "</pre>";
-
-					?>
 					<?php echo ucfirst($value) ?> feed url: <a target="_blank" href="<?php echo get_feed_link($value); ?>" title="Ссылка на фид"><?php echo get_feed_link($value); ?></a><br>
 					<?php echo ucfirst($value) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
 				<?php endforeach; ?>
+
+				<form action="options.php" method="POST">
+					<?php
+						settings_fields( 'news_feeds_option_group' );
+						do_settings_sections( 'news-feeds' );
+						submit_button();
+					?>
+				</form>
 			</div>
 		<?php
 	}
 
 	public function init() {
 		foreach ( self::FEEDS as $value ) :
-			// file_put_contents( $_SERVER["DOCUMENT_ROOT"] . self::DEST_PATH . $name . '.log', var_export( file_exists( plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php' ) ) );
-
 			add_feed( $value, function() use ( $value ) {
 				// add_filter( 'pre_option_rss_use_excerpt', '__return_zero' );
 
@@ -105,6 +105,78 @@ class NewsFeed {
 		$file = $_SERVER["DOCUMENT_ROOT"] . self::DEST_PATH . $name . '.xml';
 
 		file_put_contents( $file, $output );
+	}
+
+	/**
+	 * Настройки
+	 */
+	public function page_init() {
+		add_settings_section(
+			'news_feeds_settings',
+			'Настройки фидов',
+			'',
+			'news-feeds'
+		);
+
+		add_settings_field(
+			'logo',
+			'Ссылка на логотип сайта',
+			array( $this, 'logo_callback_function' ),
+			'news-feeds',
+			'news_feeds_settings'
+		);
+
+		add_settings_field(
+			'yandex_id',
+			'ID яндекс аналитики',
+			array( $this, 'yandex_id_callback_function' ),
+			'news-feeds',
+			'news_feeds_settings'
+		);
+
+		register_setting(
+			'news_feeds_option_group',
+			'news_feeds',
+			array( $this, 'news_feeds_sanitize_callback' )
+		);
+
+		flush_rewrite_rules();
+	}
+
+	public function news_feeds_sanitize_callback( $options ) {
+		foreach ( $options as $name => & $val ) {
+			if ( $name == 'logo' )
+				$val = esc_url_raw( $val );
+
+			if ( $name == 'yandex_id' )
+				$val = strip_tags( $val );
+		}
+
+		return $options;
+	}
+
+	public function logo_callback_function() {
+		$val = isset($this->options['logo']) ? esc_attr( $this->options['logo'] ) : ''; ?>
+
+		<input class="regular-text" type="text" name="news_feeds[logo]" placeholder="https://www.if24.ru/" value="<?php echo $val; ?>">
+		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
+	public function yandex_id_callback_function() {
+		$val = isset($this->options['yandex_id']) ? esc_attr( $this->options['yandex_id'] ) : ''; ?>
+
+		<input class="regular-text" type="text" name="news_feeds[yandex_id]" placeholder="0123456789" value="<?php echo $val; ?>">
+		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
+	public static function text_clear( $text) {
+		$text = html_entity_decode( $text );
+		$text = preg_replace( '/\\s*\\[[^()]*\\]\\s*/', '', strip_tags( $text ) );
+		$text = esc_textarea( $text );
+
+		return $text;;
 	}
 }
 
