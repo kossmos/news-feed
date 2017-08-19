@@ -53,32 +53,34 @@ class NewsFeed {
 	}
 
 	public function before_query( $query ) {
-		foreach (self::FEEDS as $value) :
-			if ( $query->is_main_query() && $query->is_feed && $query->is_feed( $value ) ) {
+		foreach ( self::FEEDS as $value ) :
+			if ( $query->is_main_query() && $query->is_feed && $query->is_feed( $value ) ) :
 				$query->set( 'posts_per_rss', self::POST_PER_RSS );
-			}
+				if ( $value === 'yandex' && $this->options['exclude_category'] !== '0' )
+					$query->set( 'cat', '-' . $this->options['exclude_category'] );
+			endif;
 		endforeach;
 	}
 
 	public function admin_plugin_info()	{
 		?>
-			<div class="wrap">
-				<h2>News feeds</h2>
-				<h3><?php echo get_admin_page_title(); ?></h3>
+		<div class="wrap">
+			<h2>News feeds</h2>
+			<h3><?php echo get_admin_page_title(); ?></h3>
 
-				<?php foreach (self::FEEDS as $value) : ?>
-					<?php echo ucfirst($value) ?> feed url: <a target="_blank" href="<?php echo get_feed_link($value); ?>" title="Ссылка на фид"><?php echo get_feed_link($value); ?></a><br>
-					<?php echo ucfirst($value) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
-				<?php endforeach; ?>
+			<?php foreach (self::FEEDS as $value) : ?>
+				<?php echo ucfirst($value) ?> feed url: <a target="_blank" href="<?php echo get_feed_link($value); ?>" title="Ссылка на фид"><?php echo get_feed_link($value); ?></a><br>
+				<?php echo ucfirst($value) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
+			<?php endforeach; ?>
 
-				<form action="options.php" method="POST">
-					<?php
-						settings_fields( 'news_feeds_option_group' );
-						do_settings_sections( 'news-feeds' );
-						submit_button();
-					?>
-				</form>
-			</div>
+			<form action="options.php" method="POST">
+				<?php
+					settings_fields( 'news_feeds_option_group' );
+					do_settings_sections( 'news-feeds' );
+					submit_button();
+				?>
+			</form>
+		</div>
 		<?php
 	}
 
@@ -91,7 +93,7 @@ class NewsFeed {
 					load_template( plugin_dir_path( __FILE__ ) . 'templates/' . $value . '.php' );
 				$output = ob_get_clean();
 
-				$this->save_feed($output, $value); // Сохраняем фид в папку
+				$this->save_feed( $output, $value ); // Сохраняем фид в папку
 
 				echo $output;
 			} );
@@ -101,7 +103,7 @@ class NewsFeed {
 	/**
 	 * Сохраняем фид в папку
 	 */
-	public function save_feed($output, $name) {
+	public function save_feed( $output, $name ) {
 		$file = $_SERVER["DOCUMENT_ROOT"] . self::DEST_PATH . $name . '.xml';
 
 		file_put_contents( $file, $output );
@@ -127,6 +129,14 @@ class NewsFeed {
 		);
 
 		add_settings_field(
+			'exclude_category',
+			'Исключить категорию из Yandex фида',
+			array( $this, 'exclude_category_callback_function' ),
+			'news-feeds',
+			'news_feeds_settings'
+		);
+
+		add_settings_field(
 			'yandex_id',
 			'ID яндекс аналитики',
 			array( $this, 'yandex_id_callback_function' ),
@@ -143,19 +153,22 @@ class NewsFeed {
 		flush_rewrite_rules();
 	}
 
-	public function news_feeds_sanitize_callback( $options ) {
+	function news_feeds_sanitize_callback( $options ) {
 		foreach ( $options as $name => & $val ) {
 			if ( $name == 'logo' )
 				$val = esc_url_raw( $val );
 
 			if ( $name == 'yandex_id' )
 				$val = strip_tags( $val );
+
+			if ( $name == 'exclude_category' )
+				$val = strip_tags( $val );
 		}
 
 		return $options;
 	}
 
-	public function logo_callback_function() {
+	function logo_callback_function() {
 		$val = isset($this->options['logo']) ? esc_attr( $this->options['logo'] ) : ''; ?>
 
 		<input class="regular-text" type="text" name="news_feeds[logo]" placeholder="https://www.if24.ru/" value="<?php echo $val; ?>">
@@ -163,7 +176,24 @@ class NewsFeed {
 		<?php
 	}
 
-	public function yandex_id_callback_function() {
+	function exclude_category_callback_function() {
+		$val = isset( $this->options['exclude_category'] ) ? esc_attr( $this->options['exclude_category'] ) : '';
+		$categories = get_categories();
+		array_push( $categories, (object) array(
+			'term_id' => '0',
+			'name' => 'Нет категории'
+		) );
+		?>
+
+		<select name="news_feeds[exclude_category]">
+			<?php foreach( $categories as $key => $category ) : ?>
+				<option value="<?php echo $category->term_id; ?>" <?php selected( $category->term_id, $val ); ?>><?php echo esc_attr( $category->name ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
+	function yandex_id_callback_function() {
 		$val = isset($this->options['yandex_id']) ? esc_attr( $this->options['yandex_id'] ) : ''; ?>
 
 		<input class="regular-text" type="text" name="news_feeds[yandex_id]" placeholder="0123456789" value="<?php echo $val; ?>">
@@ -171,10 +201,10 @@ class NewsFeed {
 		<?php
 	}
 
-	public static function text_clear( $text) {
+	public static function text_clear( $text ) {
 		$text = html_entity_decode( $text );
 		$text = preg_replace( '/\\s*\\[[^()]*\\]\\s*/', '', strip_tags( $text ) );
-		$text = esc_textarea( $text );
+		$text = trim( esc_textarea( $text ) );
 
 		return $text;;
 	}
