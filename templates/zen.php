@@ -34,6 +34,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 				<item>
 					<title><?php the_title_rss(); ?></title>
 					<link><?php the_permalink_rss(); ?></link>
+			        <guid><?php the_guid(); ?></guid>
 					<amplink><?php the_permalink_rss(); ?>amp/</amplink>
 					<pubDate><?php echo get_the_date( 'r' ); ?></pubDate>
 					<media:rating scheme="urn:simple">nonadult</media:rating>
@@ -53,7 +54,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 						endforeach;
 					endif;
 
-					?><description><![CDATA[<?php NewsFeed::text_clear( the_excerpt_rss() ); ?>]]></description>
+					?><description><![CDATA[<?php echo the_excerpt_rss(); ?>]]></description>
 					<content:encoded><![CDATA[<?php echo NewsFeed::text_clear( get_the_content_feed( 'rss2' ) ); ?>]]></content:encoded>
 				</item>
 
