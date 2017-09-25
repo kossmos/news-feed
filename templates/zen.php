@@ -28,34 +28,80 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 
 			if ( get_post_type() === 'post' ) :
 
-				$images = get_attached_media( 'image' );
-				$author = get_field( 'author' );
+				// $images = get_attached_media( 'image' );
+				$author_field = get_field( 'author' );
+				$author = $author_field ? get_field_object( 'author' )['choices'][ $author_field ] : get_the_author();
 				?>
+
 				<item>
 					<title><?php the_title_rss(); ?></title>
 					<link><?php the_permalink_rss(); ?></link>
-			        <guid><?php the_guid(); ?></guid>
+					<guid><?php the_guid(); ?></guid>
 					<amplink><?php the_permalink_rss(); ?>amp/</amplink>
 					<pubDate><?php echo get_the_date( 'r' ); ?></pubDate>
 					<media:rating scheme="urn:simple">nonadult</media:rating>
 					<category>Мода</category>
+					<author><?php echo $author; ?></author>
+
 					<?php
-					if ( $author ) :
-						$obAuthor = get_field_object( 'author' );
-						?>
-						<author><?php echo $obAuthor['choices'][ $author ]; ?></author>
-					<?php
+					$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
+					preg_match_all( '/<img[^>]+>/i', $content, $images, PREG_PATTERN_ORDER );
+
+					foreach ( $images[0] as $image ) :
+						preg_match( '/wp-image-(\d+)(.*?)/i', $image, $matches ); // получаем id изображения из класса
+
+						if ( count( $matches ) < 1 ) continue;
+
+						NewsFeed::get_enclosure( $matches[1] );
+					endforeach;
+
+
+					if ( has_post_thumbnail() ) :
+						NewsFeed::get_enclosure( get_post_thumbnail_id() );
 					endif;
 
-					if ( $images ) :
-						foreach ( $images as $image ) :
-							?><enclosure url="<?php echo $image->guid; ?>" type="<?php echo $image->post_mime_type; ?>"/>
-							<?php
-						endforeach;
-					endif;
 
 					?><description><![CDATA[<?php echo the_excerpt_rss(); ?>]]></description>
-					<content:encoded><![CDATA[<?php echo NewsFeed::text_clear( get_the_content_feed( 'rss2' ) ); ?>]]></content:encoded>
+					<content:encoded><![CDATA[<?php
+						// echo get_the_content_feed( 'rss2' );
+
+						$pattern = "/<a(.*?)>(.*?)<\/a>/s";
+						$replacement = '$2';
+						$content = preg_replace( $pattern, $replacement, $content );
+
+						$pattern = "/<figure(.*?)class=\"wp-caption(.*?)>(.*?)<figcaption class=\"wp-caption-text\">(.*?)<\/figcaption>(.*?)<\/figure>/s";
+						$replacement = '<p>$3</p>';
+						$content = preg_replace( $pattern, $replacement, $content );
+
+						$pattern = '/<img(.*?)src=\"(.*?)\"(.*?) \/>/i';
+						$replacement = '<figure>
+							<img src="$2"$3>
+							<figcaption>
+								' . get_the_title_rss() . '
+								<span class="copyright">'. $author .'</span>
+							</figcaption>
+						</figure>';
+						$content = preg_replace( $pattern, $replacement, $content );
+
+						$pattern = "/<p><figure>(.*?)<\/figure><\/p>/s";
+						$replacement = '<figure>$1</figure>';
+						$content = preg_replace( $pattern, $replacement, $content );
+
+						$content = preg_replace('/<p>https:\/\/youtu.*?<\/p>/i','', $content);
+						$content = preg_replace('/<p>https:\/\/www.youtu.*?<\/p>/i','', $content);
+
+						$thumb_content = '<figure>' .
+							get_the_post_thumbnail( get_the_ID(), 'full' ) .
+							'<figcaption>' .
+								get_the_title_rss() . '
+								<span class="copyright">'. $author .'</span>
+							</figcaption>
+						</figure>';
+
+						$thumb_content .= $content;
+						echo $thumb_content;
+
+					?>]]></content:encoded>
 				</item>
 
 				<?php

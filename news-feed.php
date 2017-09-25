@@ -215,6 +215,21 @@ class NewsFeed {
 
 		return $text;;
 	}
+
+	/**
+	 * Тэг <enclosure>
+	 * Это обязательный элемент для иллюстраций, аудио- и видеофайлов
+	 * @param  int $id изображение
+	 * @return string вывод тега
+	 */
+	public static function get_enclosure( $id ) {
+		printf(
+			'<enclosure url="%s" type="%s"/>%s',
+			wp_get_attachment_image_url( $id, 'full' ), // $image->getAttribute( 'src' )
+			get_post_mime_type( $id ),
+			PHP_EOL
+		);
+	}
 }
 
 
