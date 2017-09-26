@@ -27,6 +27,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 		while( have_posts() ) : the_post();
 
 			if ( get_post_type() === 'post' ) :
+
+				$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
+
 				$category = array();
 				$category_filed = get_field( 'category_zen' ) ? get_field( 'category_zen' ) : $options['category_zen'];
 				$author_field = get_field( 'author' );
@@ -48,7 +51,6 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 					<author><?php echo $author; ?></author>
 
 					<?php
-					$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
 					preg_match_all( '/<img[^>]+>/i', $content, $images, PREG_PATTERN_ORDER );
 
 					foreach ( $images[0] as $image ) :
@@ -67,11 +69,11 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 
 					?><description><![CDATA[<?php echo the_excerpt_rss(); ?>]]></description>
 					<content:encoded><![CDATA[<?php
-						$pattern = "/<a(.*?)>(.*?)<\/a>/s";
+						$pattern = '/<a(.*?)>(.*?)<\/a>/s';
 						$replacement = '$2';
 						$content = preg_replace( $pattern, $replacement, $content );
 
-						$pattern = "/<figure(.*?)class=\"wp-caption(.*?)>(.*?)<figcaption class=\"wp-caption-text\">(.*?)<\/figcaption>(.*?)<\/figure>/s";
+						$pattern = '/<figure(.*?)class=\"wp-caption(.*?)>(.*?)<figcaption class=\"wp-caption-text\">(.*?)<\/figcaption>(.*?)<\/figure>/s';
 						$replacement = '<p>$3</p>';
 						$content = preg_replace( $pattern, $replacement, $content );
 
@@ -85,12 +87,16 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 						</figure>';
 						$content = preg_replace( $pattern, $replacement, $content );
 
-						$pattern = "/<p><figure>(.*?)<\/figure><\/p>/s";
+						$pattern = '/<p><figure>(.*?)<\/figure><\/p>/s';
 						$replacement = '<figure>$1</figure>';
 						$content = preg_replace( $pattern, $replacement, $content );
 
-						$content = preg_replace('/<p>https:\/\/youtu.*?<\/p>/i','', $content);
-						$content = preg_replace('/<p>https:\/\/www.youtu.*?<\/p>/i','', $content);
+						$patterns = array(
+							'/<p>https:\/\/youtu.*?<\/p>/i',
+							'/<p>https:\/\/www.youtu.*?<\/p>/i'
+						);
+						$replacements = '';
+						$content = preg_replace( $patterns, $replacements, $content );
 
 						$thumb_content = '<figure>' .
 							get_the_post_thumbnail( get_the_ID(), 'full' ) .

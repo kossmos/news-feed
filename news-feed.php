@@ -370,7 +370,7 @@ class NewsFeed {
 	public static function get_enclosure( $id ) {
 		printf(
 			'<enclosure url="%s" type="%s"/>%s',
-			wp_get_attachment_image_url( $id, 'full' ), // $image->getAttribute( 'src' )
+			wp_get_attachment_image_url( $id, 'full' ),
 			get_post_mime_type( $id ),
 			PHP_EOL
 		);
