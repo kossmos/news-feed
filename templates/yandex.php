@@ -21,14 +21,42 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'; ?>
 		<?php endif; ?>
 		<yandex:analytics type="LiveInternet"></yandex:analytics>
 		<?php while( have_posts() ) : the_post();
-			?><item>
-				<title><?php the_title_rss(); ?></title>
-				<link><?php the_permalink_rss(); ?></link>
-				<pubDate><?php echo get_the_date('r'); ?></pubDate>
-				<description><?php NewsFeed::text_clear( the_excerpt_rss() ); ?></description>
-				<yandex:full-text><?php echo NewsFeed::text_clear( get_the_content_feed( 'rss2' ) ); ?></yandex:full-text>
-				<enclosure url="<?php echo esc_url( wp_get_attachment_image_url( get_post_thumbnail_id(), 'large' ) ); ?>" type="<?php echo get_post_mime_type( get_post_thumbnail_id() ); ?>" />
-			</item><?php
+
+			if ( get_post_type() === 'post' ) :
+
+				$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
+
+				?><item>
+					<title><?php the_title_rss(); ?></title>
+					<link><?php the_permalink_rss(); ?></link>
+					<pubDate><?php echo get_the_date('r'); ?></pubDate>
+					<description><?php NewsFeed::text_clear( the_excerpt_rss() ); ?></description>
+					<?php
+					if ( has_post_thumbnail() ) :
+						NewsFeed::get_enclosure( get_post_thumbnail_id() );
+					endif;
+					?>
+					<yandex:full-text><?php
+						// echo NewsFeed::text_clear( get_the_content_feed( 'rss2' ) );
+
+						$patterns = array(
+							'/<p><img(.*?)\/><\/p>/s',
+							'/<p><figure(.*?)>(.*?)<\/figure><\/p>/s',
+							'/<figure(.*?)>(.*?)<\/figure>/s',
+							'/<p>https:\/\/youtu.*?<\/p>/i',
+							'/<p>https:\/\/www.youtu.*?<\/p>/i'
+						);
+						$replacements = '';
+						$content = preg_replace( $patterns, $replacements, $content );
+
+						$content = html_entity_decode( $content );
+
+						echo $content;
+					?></yandex:full-text>
+				</item><?php
+
+			endif;
+
 		endwhile;
 	?></channel>
 </rss>
