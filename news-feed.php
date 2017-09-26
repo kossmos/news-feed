@@ -57,8 +57,12 @@ class NewsFeed {
 
 			if ( $query->is_main_query() && $query->is_feed && $query->is_feed( $value ) ) :
 
-				$query->set( 'posts_per_rss', self::POST_PER_RSS );
+				$query->set( 'posts_per_rss', $this->options['count_posts_' . $value] );
+				// $query->set( 'posts_per_rss', self::POST_PER_RSS );
 				$query->set( 'nopaging', true );
+
+				if ( $value === 'yandex' ) :
+				endif;
 
 				if ( $value === 'yandex' && $this->options['exclude_category'] !== '0' ) :
 					$query->set( 'cat', '-' . $this->options['exclude_category'] );
@@ -136,14 +140,6 @@ class NewsFeed {
 		);
 
 		add_settings_field(
-			'exclude_category',
-			'Исключить категорию из Yandex фида',
-			array( $this, 'exclude_category_callback_function' ),
-			'news-feeds',
-			'news_feeds_settings'
-		);
-
-		add_settings_field(
 			'yandex_id',
 			'ID яндекс аналитики',
 			array( $this, 'yandex_id_callback_function' ),
@@ -151,6 +147,84 @@ class NewsFeed {
 			'news_feeds_settings'
 		);
 
+		/**
+		 * Yandex Zen
+		 */
+		add_settings_section(
+			'yandex_zen_settings',
+			'Яндекс.Дзен',
+			'',
+			'news-feeds'
+		);
+		add_settings_field(
+			'count_posts_zen',
+			'Количество постов в фиде',
+			array( $this, 'count_posts_zen_callback_function' ),
+			'news-feeds',
+			'yandex_zen_settings'
+		);
+
+		/**
+		 * Rambler News
+		 */
+		add_settings_section(
+			'rambler_settings',
+			'Рамблер новости',
+			'',
+			'news-feeds'
+		);
+		add_settings_field(
+			'count_posts_rambler',
+			'Количество постов в фиде',
+			array( $this, 'count_posts_rambler_callback_function' ),
+			'news-feeds',
+			'rambler_settings'
+		);
+
+		/**
+		 * Google News
+		 */
+		add_settings_section(
+			'google_settings',
+			'Google новости',
+			'',
+			'news-feeds'
+		);
+		add_settings_field(
+			'count_posts_google',
+			'Количество постов в фиде',
+			array( $this, 'count_posts_google_callback_function' ),
+			'news-feeds',
+			'google_settings'
+		);
+
+		/**
+		 * Yandex News
+		 */
+		add_settings_section(
+			'yandex_settings',
+			'Яндекс.Новости',
+			'',
+			'news-feeds'
+		);
+		add_settings_field(
+			'count_posts_yandex',
+			'Количество постов в фиде',
+			array( $this, 'count_posts_yandex_callback_function' ),
+			'news-feeds',
+			'yandex_settings'
+		);
+		add_settings_field(
+			'exclude_category',
+			'Исключить категорию',
+			array( $this, 'exclude_category_callback_function' ),
+			'news-feeds',
+			'yandex_settings'
+		);
+
+		/**
+		 * Общие настройки
+		 */
 		register_setting(
 			'news_feeds_option_group',
 			'news_feeds',
@@ -165,10 +239,7 @@ class NewsFeed {
 			if ( $name == 'logo' )
 				$val = esc_url_raw( $val );
 
-			if ( $name == 'yandex_id' )
-				$val = strip_tags( $val );
-
-			if ( $name == 'exclude_category' )
+			if ( $name == 'yandex_id' || $name == 'exclude_category' || $name == 'count_posts_zen' )
 				$val = strip_tags( $val );
 		}
 
@@ -178,7 +249,7 @@ class NewsFeed {
 	function logo_callback_function() {
 		$val = isset($this->options['logo']) ? esc_attr( $this->options['logo'] ) : ''; ?>
 
-		<input class="regular-text" type="text" name="news_feeds[logo]" placeholder="https://www.if24.ru/" value="<?php echo $val; ?>">
+		<input class="regular-text" type="text" name="news_feeds[logo]" placeholder="https://" value="<?php echo $val; ?>">
 		<p class="description">Обязательно поле</p>
 		<?php
 	}
@@ -203,10 +274,59 @@ class NewsFeed {
 	function yandex_id_callback_function() {
 		$val = isset($this->options['yandex_id']) ? esc_attr( $this->options['yandex_id'] ) : ''; ?>
 
-		<input class="regular-text" type="text" name="news_feeds[yandex_id]" placeholder="0123456789" value="<?php echo $val; ?>">
+		<input class="" type="text" name="news_feeds[yandex_id]" placeholder="" value="<?php echo $val; ?>">
 		<p class="description">Обязательно поле</p>
 		<?php
 	}
+
+
+	/**
+	 * Yandex Zen
+	 */
+	function count_posts_zen_callback_function() {
+		$val = isset($this->options['count_posts_zen']) ? esc_attr( $this->options['count_posts_zen'] ) : 50; ?>
+
+		<input type="number" name="news_feeds[count_posts_zen]" placeholder="" min="50" max="9999" value="<?php echo $val; ?>">
+		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
+
+	/**
+	 * Rambler News
+	 */
+	function count_posts_rambler_callback_function() {
+		$val = isset($this->options['count_posts_rambler']) ? esc_attr( $this->options['count_posts_rambler'] ) : 10; ?>
+
+		<input type="number" name="news_feeds[count_posts_rambler]" placeholder="" min="1" max="9999" value="<?php echo $val; ?>">
+		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
+
+	/**
+	 * Google News
+	 */
+	function count_posts_google_callback_function() {
+		$val = isset($this->options['count_posts_google']) ? esc_attr( $this->options['count_posts_google'] ) : 10; ?>
+
+		<input type="number" name="news_feeds[count_posts_google]" placeholder="" min="1" max="9999" value="<?php echo $val; ?>">
+		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
+
+	/**
+	 * Yandex News
+	 */
+	function count_posts_yandex_callback_function() {
+		$val = isset($this->options['count_posts_yandex']) ? esc_attr( $this->options['count_posts_yandex'] ) : 10; ?>
+
+		<input type="number" name="news_feeds[count_posts_yandex]" placeholder="" min="1" max="9999" value="<?php echo $val; ?>">
+		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
 
 	public static function text_clear( $text ) {
 		$text = html_entity_decode( $text );
