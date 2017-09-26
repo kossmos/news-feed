@@ -3,7 +3,7 @@
 Plugin Name: News XML Feeds
 Plugin URI: https://github.com/kossmos/news-feed/
 Description: Wordpress плагин для генерации xml-фидов для новостных сервисов
-Version: 2.1
+Version: 2.5
 Author: Юрий «kossmos» Кравчук
 Author URI: https://kossmos.space
 License: GPL2
