@@ -79,9 +79,9 @@ class NewsFeed {
 			<h2>News feeds</h2>
 			<h3><?php echo get_admin_page_title(); ?></h3>
 
-			<?php foreach (self::FEEDS as $value) : ?>
-				<?php echo ucfirst($value) ?> feed url: <a target="_blank" href="<?php echo get_feed_link($value); ?>" title="Ссылка на фид"><?php echo get_feed_link($value); ?></a><br>
-				<?php echo ucfirst($value) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo('url') . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
+			<?php foreach ( self::FEEDS as $value ) : ?>
+				<?php echo ucfirst( $value ) ?> feed url: <a target="_blank" href="<?php echo get_feed_link( $value ); ?>" title="Ссылка на фид"><?php echo get_feed_link( $value ); ?></a><br>
+				<?php echo ucfirst( $value ) ?> static feed url: <a target="_blank" href="<?php echo get_bloginfo( 'url' ) . self::DEST_PATH . $value . '.xml'; ?>" title="Ссылка на фид"><?php echo get_bloginfo( 'url' ) . self::DEST_PATH . $value . '.xml'; ?></a><br><br>
 			<?php endforeach; ?>
 
 			<form action="options.php" method="POST">
@@ -96,6 +96,8 @@ class NewsFeed {
 	}
 
 	public function init() {
+		$this->register_acf_zen_category();
+
 		foreach ( self::FEEDS as $value ) :
 			add_feed( $value, function() use ( $value ) {
 				// add_filter( 'pre_option_rss_use_excerpt', '__return_zero' );
@@ -160,6 +162,13 @@ class NewsFeed {
 			'count_posts_zen',
 			'Количество постов в фиде',
 			array( $this, 'count_posts_zen_callback_function' ),
+			'news-feeds',
+			'yandex_zen_settings'
+		);
+		add_settings_field(
+			'category_zen',
+			'Тематика сообщений',
+			array( $this, 'category_zen_callback_function' ),
 			'news-feeds',
 			'yandex_zen_settings'
 		);
@@ -239,7 +248,7 @@ class NewsFeed {
 			if ( $name == 'logo' )
 				$val = esc_url_raw( $val );
 
-			if ( $name == 'yandex_id' || $name == 'exclude_category' || $name == 'count_posts_zen' )
+			if ( $name == 'yandex_id' || $name == 'exclude_category')
 				$val = strip_tags( $val );
 		}
 
@@ -286,8 +295,24 @@ class NewsFeed {
 	function count_posts_zen_callback_function() {
 		$val = isset($this->options['count_posts_zen']) ? esc_attr( $this->options['count_posts_zen'] ) : 50; ?>
 
-		<input type="number" name="news_feeds[count_posts_zen]" placeholder="" min="50" max="9999" value="<?php echo $val; ?>">
+		<input type="number" name="news_feeds[count_posts_zen]" placeholder="" min="1" max="9999" value="<?php echo $val; ?>">
 		<p class="description">Обязательно поле</p>
+		<?php
+	}
+
+	function category_zen_callback_function() {
+		$val = isset( $this->options['category_zen'] ) ? $this->options['category_zen'] : '';
+		?>
+
+		<select size="8" multiple name="news_feeds[category_zen][]">
+			<?php foreach( $this->get_zen_category() as $key => $category ) :
+				$selected = in_array( $key, $val ) ? ' selected ' : '';
+				?>
+
+				<option value="<?php echo $key; ?>" <?php echo $selected; ?>><?php echo esc_attr( $category ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<p class="description">Общая тематика сообщений выводится если в посте не указана индивидуальная</p>
 		<?php
 	}
 
@@ -296,7 +321,7 @@ class NewsFeed {
 	 * Rambler News
 	 */
 	function count_posts_rambler_callback_function() {
-		$val = isset($this->options['count_posts_rambler']) ? esc_attr( $this->options['count_posts_rambler'] ) : 10; ?>
+		$val = isset( $this->options['count_posts_rambler'] ) ? esc_attr( $this->options['count_posts_rambler'] ) : 10; ?>
 
 		<input type="number" name="news_feeds[count_posts_rambler]" placeholder="" min="1" max="9999" value="<?php echo $val; ?>">
 		<p class="description">Обязательно поле</p>
@@ -348,6 +373,81 @@ class NewsFeed {
 			wp_get_attachment_image_url( $id, 'full' ), // $image->getAttribute( 'src' )
 			get_post_mime_type( $id ),
 			PHP_EOL
+		);
+	}
+
+	/**
+	 * Подключаю поле плагина ACF для выбора тематики сообщения
+	 */
+	function register_acf_zen_category() {
+		if ( function_exists( 'register_field_group' ) ) :
+
+			register_field_group( array(
+				'id'     => 'acf_tematika-zapisey-dlya-yandeks-dzen',
+				'title'  => 'Тематика записей для Яндекс.Дзен',
+				'fields' => array(
+					array(
+						'key'           => 'field_59ca25e68c08b',
+						'label'         => 'Категория',
+						'name'          => 'category_zen',
+						'type'          => 'select',
+						'required'      => 1,
+						'choices'       => $this->get_zen_category(),
+						'default_value' => '',
+						'allow_null'    => 0,
+						'multiple'      => 1,
+					),
+				),
+				'location' => array(
+					array(
+						array (
+							'param'    => 'post_type',
+							'operator' => '==',
+							'value'    => 'post',
+							'order_no' => 0,
+							'group_no' => 0,
+						),
+					),
+				),
+				'options' => array(
+					'position'       => 'side',
+					'layout'         => 'default',
+					'hide_on_screen' => array(),
+				),
+				'menu_order' => 0
+			));
+
+		endif;
+	}
+
+	public static function get_zen_category() {
+		return array(
+			'incidents'    => 'Происшествия',
+			'policy'       => 'Политика',
+			'war'          => 'Война',
+			'society'      => 'Общество',
+			'economy'      => 'Экономика',
+			'sport'        => 'Спорт',
+			'technologies' => 'Технологии',
+			'science'      => 'Наука',
+			'games'        => 'Игры',
+			'music'        => 'Музыка',
+			'literature'   => 'Литература',
+			'cinema'       => 'Кино',
+			'culture'      => 'Культура',
+			'fashion'      => 'Мода',
+			'celebrities'  => 'Знаменитости',
+			'psychology'   => 'Психология',
+			'health'       => 'Здоровье',
+			'auto'         => 'Авто',
+			'house'        => 'Дом',
+			'hobby'        => 'Хобби',
+			'food'         => 'Еда',
+			'design'       => 'Дизайн',
+			'photo'        => 'Фотографии',
+			'humor'        => 'Юмор',
+			'nature'       => 'Природа',
+			'travels'      => 'Путешествия'
 		);
 	}
 }

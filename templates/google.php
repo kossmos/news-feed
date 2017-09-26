@@ -15,7 +15,7 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?'.'>';
 		<title><?php wp_title_rss(); ?></title>
 		<link><?php bloginfo_rss( 'url' ); ?></link>
 		<description><?php bloginfo_rss( 'description' ); ?></description>
-		<?php if ( !empty( $options['logo'] ) ) :
+		<?php if ( ! empty( $options['logo'] ) ) :
 		?><image>
 			<url><?php echo $options['logo']; ?></url>
 			<title><?php wp_title_rss(); ?></title>

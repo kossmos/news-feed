@@ -27,10 +27,14 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 		while( have_posts() ) : the_post();
 
 			if ( get_post_type() === 'post' ) :
-
-				// $images = get_attached_media( 'image' );
+				$category = array();
+				$category_filed = get_field( 'category_zen' ) ? get_field( 'category_zen' ) : $options['category_zen'];
 				$author_field = get_field( 'author' );
 				$author = $author_field ? get_field_object( 'author' )['choices'][ $author_field ] : get_the_author();
+
+				foreach( $category_filed as $value ) :
+					array_push( $category, NewsFeed::get_zen_category()[ $value ] );
+				endforeach;
 				?>
 
 				<item>
@@ -40,7 +44,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 					<amplink><?php the_permalink_rss(); ?>amp/</amplink>
 					<pubDate><?php echo get_the_date( 'r' ); ?></pubDate>
 					<media:rating scheme="urn:simple">nonadult</media:rating>
-					<category>Мода</category>
+					<category><?php echo implode( ',', $category ); ?></category>
 					<author><?php echo $author; ?></author>
 
 					<?php
@@ -63,8 +67,6 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 
 					?><description><![CDATA[<?php echo the_excerpt_rss(); ?>]]></description>
 					<content:encoded><![CDATA[<?php
-						// echo get_the_content_feed( 'rss2' );
-
 						$pattern = "/<a(.*?)>(.*?)<\/a>/s";
 						$replacement = '$2';
 						$content = preg_replace( $pattern, $replacement, $content );

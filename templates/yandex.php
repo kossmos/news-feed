@@ -16,7 +16,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'; ?>
 		<title><?php wp_title_rss(); ?></title>
 		<link><?php bloginfo_rss('url'); ?></link>
 		<description><?php bloginfo_rss("description"); ?></description>
-		<?php if ( !empty( $options['yandex_id'] ) ) : ?>
+		<?php if ( ! empty( $options['yandex_id'] ) ) : ?>
 		<yandex:analytics id="<?php echo $options['yandex_id']; ?>" type="Yandex"></yandex:analytics>
 		<?php endif; ?>
 		<yandex:analytics type="LiveInternet"></yandex:analytics>
