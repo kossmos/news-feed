@@ -78,40 +78,42 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 						$content = preg_replace( $pattern, $replacement, $content );
 
 						$pattern = '/<img(.*?)src=\"(.*?)\"(.*?) \/>/i';
-						$replacement = '<figure>
+						$replacement = PHP_EOL . '<figure>
 							<img src="$2"$3>
 							<figcaption>
 								' . get_the_title_rss() . '
 								<span class="copyright">'. $author .'</span>
 							</figcaption>
-						</figure>';
+						</figure>' . PHP_EOL;
 						$content = preg_replace( $pattern, $replacement, $content );
 
-						$pattern = '/<p><figure>(.*?)<\/figure><\/p>/s';
-						$replacement = '<figure>$1</figure>';
-						$content = preg_replace( $pattern, $replacement, $content );
+				        $patterns = array(
+							'/<p>\r\n<figure>(.*?)<\/figure>\r\n<\/p>/s',
+							'/<p>\n<figure>(.*?)<\/figure>\n<\/p>/s'
+				        );
+						$replacements = '<figure>$1</figure>';
+						$content = preg_replace( $patterns, $replacements, $content );
 
 						$patterns = array(
+							'/<div(.*?)<\/div>/i', // TODO поддержка видео
+							'/<p><span style(.*?)<\/span><\/p>/i',
 							'/<p>https:\/\/youtu.*?<\/p>/i',
 							'/<p>https:\/\/www.youtu.*?<\/p>/i'
 						);
 						$replacements = '';
 						$content = preg_replace( $patterns, $replacements, $content );
 
-						$thumb_content = '<figure>' .
-							get_the_post_thumbnail( get_the_ID(), 'full' ) .
+						$thumb_content = PHP_EOL . '<figure>' . PHP_EOL .
+							get_the_post_thumbnail( get_the_ID(), 'full' ) . PHP_EOL .
 							'<figcaption>' .
 								get_the_title_rss() . '
 								<span class="copyright">'. $author .'</span>
 							</figcaption>
-						</figure>';
+						</figure>' . PHP_EOL;
 
 						$thumb_content .= $content;
 
-						$thumb_content = NewsFeed::text_clear( $thumb_content );
-
 						echo $thumb_content;
-
 					?>]]></content:encoded>
 				</item>
 

@@ -30,7 +30,6 @@ License: GPL2
 class NewsFeed {
 	const
 		FEEDS = array( 'rambler', 'yandex', 'google', 'zen' ),
-		POST_PER_RSS = 9999,
 		DEST_PATH = '/feeds/';
 
 	public function __construct() {
@@ -58,11 +57,7 @@ class NewsFeed {
 			if ( $query->is_main_query() && $query->is_feed && $query->is_feed( $value ) ) :
 
 				$query->set( 'posts_per_rss', $this->options['count_posts_' . $value] );
-				// $query->set( 'posts_per_rss', self::POST_PER_RSS );
 				$query->set( 'nopaging', true );
-
-				if ( $value === 'yandex' ) :
-				endif;
 
 				if ( $value === 'yandex' && $this->options['exclude_category'] !== '0' ) :
 					$query->set( 'cat', '-' . $this->options['exclude_category'] );
