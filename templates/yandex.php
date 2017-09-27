@@ -29,7 +29,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'; ?>
 				?><item>
 					<title><?php the_title_rss(); ?></title>
 					<link><?php the_permalink_rss(); ?></link>
-					<pubDate><?php echo get_the_date('r'); ?></pubDate>
+					<pubDate><?php echo get_the_date( 'r' ); ?></pubDate>
 					<description><?php NewsFeed::text_clear( the_excerpt_rss() ); ?></description>
 					<?php
 					if ( has_post_thumbnail() ) :
@@ -37,7 +37,6 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'; ?>
 					endif;
 					?>
 					<yandex:full-text><?php
-						// echo NewsFeed::text_clear( get_the_content_feed( 'rss2' ) );
 
 						$patterns = array(
 							'/<p><img(.*?)\/><\/p>/s',
@@ -49,7 +48,7 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'; ?>
 						$replacements = '';
 						$content = preg_replace( $patterns, $replacements, $content );
 
-						$content = html_entity_decode( $content );
+						$content = NewsFeed::text_clear( $content );
 
 						echo $content;
 					?></yandex:full-text>

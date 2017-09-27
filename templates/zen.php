@@ -107,6 +107,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 						</figure>';
 
 						$thumb_content .= $content;
+
+						$thumb_content = NewsFeed::text_clear( $thumb_content );
+
 						echo $thumb_content;
 
 					?>]]></content:encoded>

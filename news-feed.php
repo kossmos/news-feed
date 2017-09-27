@@ -384,7 +384,7 @@ class NewsFeed {
 
 			register_field_group( array(
 				'id'     => 'acf_tematika-zapisey-dlya-yandeks-dzen',
-				'title'  => 'Тематика записей для Яндекс.Дзен',
+				'title'  => 'Тематика записи для Яндекс.Дзен',
 				'fields' => array(
 					array(
 						'key'           => 'field_59ca25e68c08b',
