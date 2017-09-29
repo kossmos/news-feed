@@ -14,9 +14,16 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?'.'>';
 		<title><?php wp_title_rss(); ?></title>
 		<link><?php bloginfo_rss( 'url' ); ?></link>
 		<description><?php bloginfo_rss( 'description' ); ?></description>
-		<?php while( have_posts()) : the_post(); ?>
+		<?php while( have_posts()) : the_post();
+
+			/**
+			 * Исключение записи
+			 */
+			$exclude_feed = get_field( 'feeds_exclude_post' );
+			if ( in_array( basename( __FILE__, '.php' ), $exclude_feed ) ) continue;
+			?>
 			<item>
-				<guid isPermaLink="false">2334456</guid>
+				<guid isPermaLink="false"><?php the_guid(); ?></guid>
 				<title><?php the_title_rss(); ?></title>
 				<link><?php the_permalink_rss(); ?></link>
 				<pubDate><?php echo get_the_date( 'r' ); ?></pubDate>
