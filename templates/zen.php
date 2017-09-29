@@ -32,7 +32,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 				 * Исключение записи
 				 */
 				$exclude_feed = get_field( 'feeds_exclude_post' );
-				if ( in_array( basename( __FILE__, '.php' ), $exclude_feed ) ) continue;
+				if ( is_array( $exclude_feed ) && in_array( basename( __FILE__, '.php' ), $exclude_feed ) ) continue;
 
 
 				/**
@@ -40,7 +40,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 				 */
 				$category = array();
 				$category_filed = get_field( 'category_zen' );
-				$category_fileds = ! in_array( 'null', $category_filed ) && $category_filed ? $category_filed : $options['category_zen'];
+				$category_fileds = is_array( $category_filed ) && ! in_array( 'null', $category_filed ) && $category_filed ? $category_filed : $options['category_zen'];
 
 				foreach( $category_fileds as $value ) :
 					array_push( $category, NewsFeed::get_zen_category()[ $value ] );

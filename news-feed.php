@@ -429,7 +429,7 @@ class NewsFeed {
 		endif;
 	}
 
-	function get_zen_category() {
+	public static function get_zen_category() {
 		return array(
 			'incidents'    => 'Происшествия',
 			'policy'       => 'Политика',
