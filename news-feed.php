@@ -3,7 +3,7 @@
 Plugin Name: News XML Feeds
 Plugin URI: https://github.com/kossmos/news-feed/
 Description: Wordpress плагин для генерации xml-фидов для новостных сервисов
-Version: 2.5
+Version: 2.6
 Author: Юрий «kossmos» Кравчук
 Author URI: https://kossmos.space
 License: GPL2
@@ -91,6 +91,8 @@ class NewsFeed {
 	}
 
 	public function init() {
+		date_default_timezone_set( 'Europe/Moscow' );
+
 		$this->register_acf_zen_category();
 
 		foreach ( self::FEEDS as $value ) :
@@ -379,17 +381,29 @@ class NewsFeed {
 
 			register_field_group( array(
 				'id'     => 'acf_tematika-zapisey-dlya-yandeks-dzen',
-				'title'  => 'Тематика записи для Яндекс.Дзен',
+				'title'  => 'Настройки новостных фидов',
 				'fields' => array(
 					array(
 						'key'           => 'field_59ca25e68c08b',
-						'label'         => 'Категория',
+						'label'         => 'Тематики записи для Яндекс.Дзен',
 						'name'          => 'category_zen',
 						'type'          => 'select',
-						'required'      => 1,
+						'instructions' 	=> 'Выберите тематики для данной записи. Если тематики не выбраны, то для записи используется глобальная настройка.',
+						'required'      => 0,
 						'choices'       => $this->get_zen_category(),
 						'default_value' => '',
-						'allow_null'    => 0,
+						'allow_null'    => 1,
+						'multiple'      => 1,
+					),
+					array (
+						'key'          => 'field_59ce21d576b0a',
+						'label'        => 'Исключить запись из фидов',
+						'name'         => 'feeds_exclude_post',
+						'type'         => 'select',
+						'instructions' => 'Выберите фиды из которых нужно исключить данную запись',
+						'choices'      => $this->get_list_feeds(),
+						'default_value' => '',
+						'allow_null'    => 1,
 						'multiple'      => 1,
 					),
 				),
@@ -415,7 +429,7 @@ class NewsFeed {
 		endif;
 	}
 
-	public static function get_zen_category() {
+	function get_zen_category() {
 		return array(
 			'incidents'    => 'Происшествия',
 			'policy'       => 'Политика',
@@ -444,6 +458,16 @@ class NewsFeed {
 			'nature'       => 'Природа',
 			'travels'      => 'Путешествия'
 		);
+	}
+
+	function get_list_feeds() {
+		$array = array();
+
+		foreach ( self::FEEDS as $value ) :
+			$array[ $value ] = ucfirst( $value );
+		endforeach;
+
+		return $array;
 	}
 }
 

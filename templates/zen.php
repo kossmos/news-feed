@@ -28,16 +28,36 @@ echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
 
 			if ( get_post_type() === 'post' ) :
 
-				$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
+				/**
+				 * Исключение записи
+				 */
+				$exclude_feed = get_field( 'feeds_exclude_post' );
+				if ( in_array( basename( __FILE__, '.php' ), $exclude_feed ) ) continue;
 
+
+				/**
+				 * Тематика записи
+				 */
 				$category = array();
-				$category_filed = get_field( 'category_zen' ) ? get_field( 'category_zen' ) : $options['category_zen'];
+				$category_filed = get_field( 'category_zen' );
+				$category_fileds = ! in_array( 'null', $category_filed ) && $category_filed ? $category_filed : $options['category_zen'];
+
+				foreach( $category_fileds as $value ) :
+					array_push( $category, NewsFeed::get_zen_category()[ $value ] );
+				endforeach;
+
+
+				/**
+				 * Автор записи
+				 */
 				$author_field = get_field( 'author' );
 				$author = $author_field ? get_field_object( 'author' )['choices'][ $author_field ] : get_the_author();
 
-				foreach( $category_filed as $value ) :
-					array_push( $category, NewsFeed::get_zen_category()[ $value ] );
-				endforeach;
+
+				/**
+				 * Получаем основной контент записи
+				 */
+				$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
 				?>
 
 				<item>

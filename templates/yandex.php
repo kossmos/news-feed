@@ -24,8 +24,17 @@ echo '<?xml version="1.0" encoding="'.get_option('blog_charset').'"?'.'>'; ?>
 
 			if ( get_post_type() === 'post' ) :
 
-				$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
+				/**
+				 * Исключение записи
+				 */
+				$exclude_feed = get_field( 'feeds_exclude_post' );
+				if ( in_array( basename( __FILE__, '.php' ), $exclude_feed ) ) continue;
 
+
+				/**
+				 * Получаем основной контент записи
+				 */
+				$content = apply_filters( 'the_content_feed', wpautop( do_shortcode( get_post_field( 'post_content', get_the_ID() ) ) ), 'rss2' );
 				?><item>
 					<title><?php the_title_rss(); ?></title>
 					<link><?php the_permalink_rss(); ?></link>
